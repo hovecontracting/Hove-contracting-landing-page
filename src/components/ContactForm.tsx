@@ -11,10 +11,6 @@ type Props = {
   emailTo: string
 }
 
-function encodeForm(data: Record<string, string>) {
-  return new URLSearchParams(data).toString()
-}
-
 function validate(state: FormState) {
   const errors: Partial<Record<keyof FormState, string>> = {}
 
@@ -31,7 +27,6 @@ export default function ContactForm({ emailTo }: Props) {
   const [submitted, setSubmitted] = useState<'idle' | 'sent'>('idle')
   const [submitError, setSubmitError] = useState<{ message: string; showEmailLink?: boolean } | null>(null)
   const [sending, setSending] = useState(false)
-  const [botField, setBotField] = useState('')
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({})
   const errors = useMemo(() => validate(state), [state])
   const hasErrors = Object.keys(errors).length > 0
@@ -50,19 +45,19 @@ export default function ContactForm({ emailTo }: Props) {
 
     setSending(true)
     try {
-      const response = await fetch('/', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: encodeForm({
-          'form-name': 'contact',
-          'bot-field': botField,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           name: state.name,
           contact: state.contact,
           message: state.message,
         }),
       })
 
-      if (response.ok) {
+      const result = await response.json()
+
+      if (response.ok && result.ok) {
         setSubmitted('sent')
         setState({ name: '', contact: '', message: '' })
         setTouched({})
@@ -105,24 +100,8 @@ export default function ContactForm({ emailTo }: Props) {
       <form
         aria-labelledby={headingId}
         onSubmit={onSubmit}
-        name="contact"
-        method="POST"
-        data-netlify="true"
-        data-netlify-honeypot="bot-field"
         className="space-y-4"
       >
-        <input type="hidden" name="form-name" value="contact" />
-        <input
-          id="botField"
-          name="bot-field"
-          value={botField}
-          onChange={(e) => setBotField(e.target.value)}
-          tabIndex={-1}
-          autoComplete="off"
-          aria-hidden="true"
-          className="hidden"
-        />
-
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-zinc-700">
             Name
