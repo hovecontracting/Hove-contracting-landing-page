@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import tsconfigPaths from "vite-tsconfig-paths";
-import contactHandler from './api/contact'
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -25,7 +24,9 @@ export default defineConfig({
       name: 'contact-api',
       configureServer(server) {
         server.middlewares.use('/api/contact', (req, res, next) => {
-          Promise.resolve(contactHandler(req, res)).catch(next)
+          import('./api/contact').then(({ default: handler }) => {
+            Promise.resolve(handler(req, res)).catch(next)
+          }).catch(next)
         })
       },
     },
