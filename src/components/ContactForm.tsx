@@ -11,6 +11,12 @@ type Props = {
   emailTo: string
 }
 
+function encode(data: Record<string, string>) {
+  return Object.keys(data)
+    .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&')
+}
+
 function validate(state: FormState) {
   const errors: Partial<Record<keyof FormState, string>> = {}
 
@@ -45,19 +51,16 @@ export default function ContactForm({ emailTo }: Props) {
 
     setSending(true)
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch('/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: state.name,
-          contact: state.contact,
-          message: state.message,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: encode({
+          'form-name': 'contact',
+          ...state,
         }),
       })
 
-      const result = await response.json()
-
-      if (response.ok && result.ok) {
+      if (response.ok) {
         setSubmitted('sent')
         setState({ name: '', contact: '', message: '' })
         setTouched({})
@@ -100,8 +103,19 @@ export default function ContactForm({ emailTo }: Props) {
       <form
         aria-labelledby={headingId}
         onSubmit={onSubmit}
+        name="contact"
+        method="POST"
+        data-netlify="true"
+        data-netlify-honeypot="bot-field"
         className="space-y-4"
       >
+        <input type="hidden" name="form-name" value="contact" />
+        <p className="hidden">
+          <label>
+            Don't fill this out if you're human: <input name="bot-field" />
+          </label>
+        </p>
+
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-zinc-700">
             Name
@@ -127,7 +141,7 @@ export default function ContactForm({ emailTo }: Props) {
           </label>
           <input
             id="contactInfo"
-            name="contactInfo"
+            name="contact"
             value={state.contact}
             onChange={(e) => setField('contact', e.target.value)}
             onBlur={() => setTouched((t) => ({ ...t, contact: true }))}
