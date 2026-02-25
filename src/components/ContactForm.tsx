@@ -11,19 +11,11 @@ type Props = {
   emailTo: string
 }
 
-function encode(data: Record<string, string>) {
-  return Object.keys(data)
-    .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
-    .join('&')
-}
-
 function validate(state: FormState) {
   const errors: Partial<Record<keyof FormState, string>> = {}
-
   if (!state.name.trim()) errors.name = 'Please enter your name.'
   if (!state.contact.trim()) errors.contact = 'Please enter an email or phone number.'
   if (!state.message.trim()) errors.message = 'Please add a short message about the project.'
-
   return errors
 }
 
@@ -51,50 +43,59 @@ export default function ContactForm({ emailTo }: Props) {
 
     setSending(true)
     try {
-      const response = await fetch('/', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: encode({
-          'form-name': 'contact',
-          ...state,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: state.name,
+          contact: state.contact,
+          message: state.message,
         }),
       })
 
-      if (response.ok) {
+      const result = await response.json()
+
+      if (response.ok && result.ok) {
         setSubmitted('sent')
         setState({ name: '', contact: '', message: '' })
         setTouched({})
         return
       }
 
-      setSubmitError({ message: 'Something went wrong sending your message. Please email us or try again later.', showEmailLink: true })
+      setSubmitError({
+        message: 'Something went wrong sending your message. Please email us or try again later.',
+        showEmailLink: true,
+      })
     } catch {
-      setSubmitError({ message: 'Something went wrong sending your message. Please email us or try again later.', showEmailLink: true })
+      setSubmitError({
+        message: 'Something went wrong sending your message. Please email us or try again later.',
+        showEmailLink: true,
+      })
     } finally {
       setSending(false)
     }
   }
 
   return (
-    <div className="w-full rounded-2xl border border-hove-brown/10 bg-hove-gray p-6 shadow-sm sm:p-8">
-      <h3 id={headingId} className="sr-only">Contact</h3>
+    <div>
+      <h2 id={headingId} className="text-2xl font-bold text-hove-brown mb-6">
+        Contact
+      </h2>
 
       {submitted === 'sent' ? (
-        <div className="mb-6 inline-flex items-center gap-2 rounded-xl border border-hove-brown/10 bg-hove-gray px-3 py-2 text-sm font-medium text-hove-brown">
-          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+        <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
           Message sent — we’ll get back to you promptly.
         </div>
       ) : null}
 
       {submitError ? (
-        <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
-          <span>{submitError.message}</span>
+        <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {submitError.message}{' '}
           {submitError.showEmailLink ? (
             <>
               {' '}
-              <a href={`mailto:${emailTo}`} className="underline underline-offset-4">
-                {emailTo}
-              </a>
+              <a href={`mailto:${emailTo}`}>{emailTo}</a>
             </>
           ) : null}
         </div>
@@ -103,19 +104,8 @@ export default function ContactForm({ emailTo }: Props) {
       <form
         aria-labelledby={headingId}
         onSubmit={onSubmit}
-        name="contact"
-        method="POST"
-        data-netlify="true"
-        data-netlify-honeypot="bot-field"
         className="space-y-4"
       >
-        <input type="hidden" name="form-name" value="contact" />
-        <p className="hidden">
-          <label>
-            Don't fill this out if you're human: <input name="bot-field" />
-          </label>
-        </p>
-
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-zinc-700">
             Name
@@ -141,7 +131,7 @@ export default function ContactForm({ emailTo }: Props) {
           </label>
           <input
             id="contactInfo"
-            name="contact"
+            name="contactInfo"
             value={state.contact}
             onChange={(e) => setField('contact', e.target.value)}
             onBlur={() => setTouched((t) => ({ ...t, contact: true }))}
