@@ -9,7 +9,7 @@ describe('ContactForm', () => {
     const fetchMock = vi.fn(async () => ({ ok: true, status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<ContactForm emailTo="hovecontracting@gmail.com" />)
+        render(<ContactForm emailTo="test@example.com" />)
 
     await user.type(screen.getByLabelText(/name/i), 'Alex')
     await user.type(screen.getByLabelText(/email or phone/i), 'alex@example.com')
