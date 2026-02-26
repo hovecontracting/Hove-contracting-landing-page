@@ -67,11 +67,11 @@ export default async function handler(req: any, res: any) {
     return
   }
 
-  const toEmail = readEnv('CONTACT_TO_EMAIL') ?? 'hovecontracting@gmail.com'
+  const toEmail = readEnv('CONTACT_TO_EMAIL')
   const fromEmail = readEnv('CONTACT_FROM_EMAIL')
   const resendApiKey = readEnv('RESEND_API_KEY')
 
-  if (!fromEmail || !resendApiKey) {
+  if (!toEmail || !fromEmail || !resendApiKey) {
     res.statusCode = 501
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
     res.end(JSON.stringify({ ok: false, error: 'Email service not configured' }))
