@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hove-contracting-landing-page.netlify.app/sitemap.xml
